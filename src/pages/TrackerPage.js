@@ -11,6 +11,7 @@ function TrackerPage() {
   const [form, setForm] = useState({ start_date: '', duration: '', cycle_length: '', notes: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
 
   const fetchCycles = async () => {
     const res = await axios.get(`${API}/cycles`);
@@ -52,15 +53,47 @@ function TrackerPage() {
     setTimeout(() => setMessage(''), 3000);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Hapus data siklus ini?')) return;
-    await axios.delete(`${API}/cycles/${id}`);
+  const confirmDelete = (id) => {
+    setDeleteModal({ open: true, id });
+  };
+
+  const handleDelete = async () => {
+    await axios.delete(`${API}/cycles/${deleteModal.id}`);
+    setDeleteModal({ open: false, id: null });
     fetchCycles();
     fetchPrediction();
   };
 
   return (
     <div className="min-h-screen bg-pink-50">
+
+      {/* Custom Delete Modal */}
+      {deleteModal.open && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-80 text-center">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 className="font-bold text-gray-800 mb-2">Hapus Data Siklus?</h3>
+            <p className="text-gray-500 text-sm mb-6">Data yang dihapus tidak dapat dikembalikan.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteModal({ open: false, id: null })}
+                className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-xl font-medium hover:bg-gray-50 transition">
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 bg-red-500 text-white py-2 rounded-xl font-medium hover:bg-red-600 transition">
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navbar */}
       <nav className="flex justify-between items-center px-10 py-5 bg-white border-b border-pink-100 shadow-sm">
         <button onClick={() => navigate('/')} className="text-2xl font-bold text-pink-500">
@@ -154,7 +187,7 @@ function TrackerPage() {
                       {cycle.notes && ` · ${cycle.notes}`}
                     </p>
                   </div>
-                  <button onClick={() => handleDelete(cycle.id)}
+                  <button onClick={() => confirmDelete(cycle.id)}
                     className="text-red-400 hover:text-red-600 text-sm font-medium">
                     Hapus
                   </button>
